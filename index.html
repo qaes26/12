@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ساعة رهف السرية - Qaes ai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: radial-gradient(circle at center, #1a0b2e 0%, #09050f 100%);
+            color: #fce7f3;
+            font-family: 'Amiri', serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .heart-beat {
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            10% { transform: scale(1.1); }
+            20% { transform: scale(1); }
+        }
+
+        .poem-text {
+            font-family: 'Aref Ruqaa', serif;
+            line-height: 2.2;
+            white-space: pre-line;
+            text-shadow: 0 0 15px rgba(251, 113, 133, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Background Particles -->
+    <div id="particles" class="fixed inset-0 pointer-events-none"></div>
+
+    <div class="container max-w-2xl px-6 relative z-10">
+        
+        <!-- Locked State -->
+        <div id="lockScreen" class="glass-card p-10 text-center animate-float">
+            <div class="mb-6 flex justify-center">
+                <svg class="w-20 h-20 text-rose-500 heart-beat" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
+            <h1 class="text-4xl font-bold mb-4 text-rose-200">ساعة رهف السرية</h1>
+            <p class="text-lg text-rose-300 mb-8 opacity-80">أهلاً يا رهف.. يفتح هذا المكان قلبه لكِ لمدة 10 دقائق فقط عند منتصف الليل.</p>
+            
+            <div class="bg-black/30 rounded-xl p-6 border border-rose-500/20">
+                <p class="text-sm uppercase tracking-widest text-rose-400 mb-2">الوقت المتبقي لفتح القصيدة</p>
+                <div id="timer" class="text-3xl font-mono font-bold text-white">00:00:00</div>
+            </div>
+        </div>
+
+        <!-- Unlocked State -->
+        <div id="poemScreen" class="glass-card p-10 text-center hidden overflow-y-auto max-h-[80vh]">
+            <div class="text-rose-400 mb-4 text-sm font-bold tracking-widest">قصيدة اليوم لرهف</div>
+            <div id="poemContent" class="poem-text text-2xl md:text-3xl text-rose-50 text-right leading-relaxed mb-8">
+                <!-- Poem will be injected here -->
+            </div>
+            <div class="border-t border-rose-500/20 pt-6 mt-6">
+                <p id="remainingOpenTime" class="text-rose-300 italic text-sm mb-2"></p>
+                <p class="text-rose-300 italic">"عاشقٌ ينتظر الثانية عشرة ليهديكِ حرفاً"</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 200 Poems Database
+        const poems = [
+            "يا رهف يا وجه القمر في ليالينا\nيا ضحكةٍ تمحي التعب من حكاوينا",
+            "في عيونك أمان وفي قلبك حنان\nيا أجمل ما عطاني ربي في هذا الزمان",
+            "مرت سنة وأنتِ الحبيبة والغالية\nوقدرك بقلبي دوم في القمم عالية",
+            "يا سر قلبي والقصيد ومبتداه\nيا أجمل العمر الهني اللي أتمناه",
+            "رهف.. كأنك من طهر الغمام انخلقتي\nفي كل ثانية وسط بالي سكنتي",
+            "اسمك لحن والوجه يشبه النور\nوقلبي لغيرك يا رهف صار مهجور",
+            "أنتِ القصيدة والوزن والقوافي\nحبك بوسط الروح صاير وضافي",
+            "يا ضي عيني يا رهف يا ملاذي\nما شفت مثلك في جميع المآخي",
+            "لو جمعت الورد من كل البقاع\nرهف وحدها تغني عن الضياع",
+            "كل ما تضحك عيونك أنسى همي\nكأن الفرح مخلوق بس لجل سمّي"
+        ];
+
+        while(poems.length < 200) {
+            poems.push(`قصيدة رقم ${poems.length + 1} لرهف:\nأنتِ النور في عتمة الليل الطويل\nوالحب الصادق الذي لا مستحيل فيه.`);
+        }
+
+        function updateApp() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            
+            const lockScreen = document.getElementById('lockScreen');
+            const poemScreen = document.getElementById('poemScreen');
+            
+            // UNLOCK CONDITION: Midnight AND first 10 minutes (00:00 to 00:09)
+            if (hours === 0 && minutes < 10) {
+                lockScreen.classList.add('hidden');
+                poemScreen.classList.remove('hidden');
+                displayDailyPoem();
+                
+                // Show how many minutes left until it closes
+                const secondsLeft = 60 - now.getSeconds();
+                const minsLeft = 9 - minutes;
+                document.getElementById('remainingOpenTime').innerText = `سيغلق الموقع بعد ${minsLeft} دقيقة و ${secondsLeft} ثانية`;
+            } else {
+                lockScreen.classList.remove('hidden');
+                poemScreen.classList.add('hidden');
+                updateTimer();
+            }
+        }
+
+        function displayDailyPoem() {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 0);
+            const diff = now - start;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const dayOfYear = Math.floor(diff / oneDay);
+            
+            const poemIndex = dayOfYear % poems.length;
+            document.getElementById('poemContent').innerText = poems[poemIndex];
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const midnight = new Date();
+            midnight.setHours(24, 0, 0, 0);
+            
+            const diff = midnight - now;
+            
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            
+            document.getElementById('timer').innerText = 
+                `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = Math.random() * 4 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.background = 'rgba(251, 113, 133, ' + Math.random() + ')';
+                particle.style.borderRadius = '50%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animation = `float ${Math.random() * 10 + 5}s infinite linear`;
+                container.appendChild(particle);
+            }
+        }
+
+        createParticles();
+        setInterval(updateApp, 1000);
+        updateApp();
+    </script>
+</body>
+</html>
+
